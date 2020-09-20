@@ -3,6 +3,7 @@ const moment = require('moment');
 
 const Mongodb = require('./service/Mongodb');
 const RedisService = require('./service/Redis');
+const OAuthClientService = require('./service/OAuthClientService')
 
 /**
  * 程序上下文
@@ -29,6 +30,7 @@ class AppContext {
 		this.logger = new Logger();
 		this.mongodb = new Mongodb();
 		this.redisService = new RedisService();
+		this.clientService = new OAuthClientService(this);
 	}
 }
 

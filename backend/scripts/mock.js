@@ -14,19 +14,19 @@ let mockUsers = async () => {
 	await User.create({
 		name: '曹晖',
 		password: md5('P@ssw0rd'),
-		mobile: '13817122600'
+		email: 'caohui@shgbit.com'
 	});
 
 	await User.create({
 		name: '封昌俊',
 		password: md5('P@ssw0rd'),
-		mobile: '13918416286'
+		email: 'fengchangjun@shgbit.com'
 	});
 
 	await User.create({
 		name: '马文娟',
 		password: md5('P@ssw0rd'),
-		mobile: '13611768317'
+		email: 'mawenjuan@shgbit.com'
 	});
 };
 

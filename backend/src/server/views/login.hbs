@@ -214,10 +214,10 @@
 			<h2>登录 Todo Demo</h2>
 
 			<div class="tab">
-				<button class="tablinks active" onclick="openTab(event, 'sms')" id="defaultOpen">手机号验证登录</button>
+				<button class="tablinks active" onclick="openTab(event, 'sms')" id="defaultOpen">邮箱验证登录</button>
 			</div>
 
-			<div id="sms" class="tabcontent">
+			<div id="mail" class="tabcontent">
 				<form id='loginForm' action='{{backend_origin}}/oauth/authorize' method='post'>
 					<input type="hidden" name='response_type' value='{{response_type}}' />
 					<input type="hidden" name='redirect_uri' value='{{redirect_uri}}' />
@@ -228,7 +228,7 @@
 					</div>
 					{{/if}}
 					<div class='formItem'>
-						<p>手机号</p>
+						<p>邮箱</p>
 						<input type="text" name="username" value='{{username}}'>
 					</div>
 					<div class='formItem'>
