@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Space365 Passport</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+			-moz-box-sizing: border-box;
+			-webkit-box-sizing: border-box;
+		}
+
+		html,
+		body {
+			width: 100vw;
+			height: 100vh;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+			background: #f1f2f3;
+			color: #333;
+			overflow: hidden;
+		}
+
+		.container {
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.loginWrapper {
+			width: 480px;
+			padding: 2em;
+			background: #fff;
+			box-shadow: 0 0 30px rgba(0, 0, 0, .1);
+		}
+
+		.loginWrapper h2 {
+			font-size: 20px;
+			/* text-align: center; */
+			margin-bottom: 1.5em;
+		}
+
+		/* Style the tab */
+		.tab {
+			overflow: hidden;
+			/* border: 1px solid #e8e8e8; */
+			border-bottom: none;
+		}
+
+		/* Style the buttons inside the tab */
+		.tab button {
+			background-color: inherit;
+			float: left;
+			border: none;
+			outline: none;
+			cursor: pointer;
+			padding: 12px 0;
+			transition: 0.3s;
+			font-size: 15px;
+			color: #aaa;
+			margin-right: 16px;
+		}
+
+		/* Change background color of buttons on hover */
+		.tab button:hover {
+			-webkit-box-shadow: inset 0px -2px 0px 0px #e8e8e8;
+			-moz-box-shadow: inset 0px -2px 0px 0px #e8e8e8;
+			box-shadow: inset 0px -2px 0px 0px #e8e8e8;
+
+			color: #666;
+		}
+
+		/* Create an active/current tablink class */
+		.tab button.active {
+			color: #333;
+			background: #fff;
+			font-weight: 500;
+			z-index: 999;
+			/* border-bottom: 2px solid #EA3E23; */
+			-webkit-box-shadow: inset 0px -2px 0px 0px #EA3E23;
+			-moz-box-shadow: inset 0px -2px 0px 0px #EA3E23;
+			box-shadow: inset 0px -2px 0px 0px #EA3E23;
+		}
+
+		/* Style the tab content */
+		.tabcontent {
+			display: block;
+			padding: 24px 0;
+			background: #fff;
+			border-top: none;
+		}
+
+		.formItem {
+			margin-bottom: 1em;
+		}
+
+		.formItem p {
+			margin-bottom: 8px;
+			font-size: 14px;
+			color: #aaa;
+		}
+
+		.formItem input {
+			width: 100%;
+			border: 1px solid #ddd;
+			padding: 8px;
+			font-size: 16px;
+			outline: none;
+		}
+
+		.smsInput {
+			display: flex;
+			border: 1px solid #ddd;
+		}
+
+		.smsInput input {
+			border: none;
+			outline: none;
+		}
+
+		.smsInput button {
+			flex: 0 0 25%;
+			border: none;
+			background: #fff;
+			color: #EA3E23;
+			font-size: 13px;
+		}
+
+		.loginButton {
+			border: none;
+			outline: none;
+			background: #EA3E23;
+			color: #fff;
+			padding: 12px 16px;
+			margin-top: 10px;
+			font-size: 15px;
+			width: 100%;
+			transition: 0.3s;
+		}
+
+		.loginButton:hover {
+			background: #D2371F;
+		}
+
+		.warningFlash {
+			margin-bottom: 16px;
+			padding: 8px 15px;
+			font-size: 14px;
+			background: #fff1f0;
+			border: 1px solid #ffa39e;
+			border-radius: 4px;
+
+		}
+
+		::placeholder {
+			/* Chrome, Firefox, Opera, Safari 10.1+ */
+			font-size: 14px;
+			color: #aaa;
+			/* Firefox */
+		}
+
+		:-ms-input-placeholder {
+			/* Internet Explorer 10-11 */
+			font-size: 14px;
+			color: #aaa;
+		}
+
+		::-ms-input-placeholder {
+			/* Microsoft Edge */
+			font-size: 14px;
+			color: #aaa;
+		}
+
+		@media only screen and (max-width: 600px) {
+			body {
+				background: #fff;
+			}
+
+			.loginWrapper {
+				box-shadow: none;
+				padding: 16px;
+			}
+
+			.container {
+				display: flex;
+				align-items: flex-start;
+				margin-top: 24px;
+			}
+		}
+	</style>
+	<script type='text/javascript' src="{{backend_origin}}/jquery.min.js"></script>
+	<script type='text/javascript' src="{{backend_origin}}/md5.min.js"></script>
+	<script type='text/javascript' src="{{backend_origin}}/axios.min.js"></script>
+	<script type='text/javascript'>
+		$(() => {
+			$('#loginButton').on('click', function (e) {
+				e.preventDefault();
+
+				let form = $('#loginForm').get(0);
+				form.submit();
+			});
+		});
+	</script>
+</head>
+
+<body>
+	<div class='container'>
+		<div class='loginWrapper'>
+			<h2>登录 Todo Demo</h2>
+
+			<div class="tab">
+				<button class="tablinks active" onclick="openTab(event, 'sms')" id="defaultOpen">手机号验证登录</button>
+			</div>
+
+			<div id="sms" class="tabcontent">
+				<form id='loginForm' action='{{backend_origin}}/oauth/authorize' method='post'>
+					<input type="hidden" name='response_type' value='{{response_type}}' />
+					<input type="hidden" name='redirect_uri' value='{{redirect_uri}}' />
+					<input type="hidden" name='client_id' value='{{clientId}}' />
+					{{#if message}}
+					<div class="warningFlash">
+						<p>{{message}}</p>
+					</div>
+					{{/if}}
+					<div class='formItem'>
+						<p>手机号</p>
+						<input type="text" name="username" value='{{username}}'>
+					</div>
+					<div class='formItem'>
+						<p>密码</p>
+						<div class="smsInput">
+							<input type="password" name="password">
+						</div>
+					</div>
+					<div class='formItem'>
+						<button type="submit" class='loginButton'>登录</button>
+					</div>
+				</form>
+			</div>
+
+		</div>
+	</div>
+
+</body>
+
+</html>

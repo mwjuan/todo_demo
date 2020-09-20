@@ -1,0 +1,11 @@
+app: todo_demo
+port: 10203
+db: mongodb://localhost/tododb
+redis: redis://localhost:6379/7
+
+backend_origin: http://localhost:3000/api
+home_origin: http://localhost:3000
+
+logger:
+  file: false
+  console: true
