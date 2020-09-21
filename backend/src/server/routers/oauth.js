@@ -78,7 +78,6 @@ router.post('/authorize', async ctx => {
 			let payload = { user: { username: user.username } };
 
 			let access_token = jwt.sign(payload, config.security.jwtSecret, { expiresIn: '30d' });
-			console.log('token===>>>', access_token)
 
 			logger.info(`oauth token: generate jwt for user - ${user.username}`);
 			ctx.cookies.set('token', access_token, { httpOnly: false, expires: moment().add(30, 'day').toDate() });
