@@ -8,8 +8,12 @@ router.get('/users', async ctx => {
 	ctx.body = users;
 });
 
-router.get('/user', async ctx => {
-	ctx.body = ctx.state.user;
+router.get('/me', async ctx => {
+	if (ctx.state.user) {
+		ctx.body = ctx.state.user;
+	} else {
+		ctx.body = 'hello';
+	}
 });
 
 module.exports = router;

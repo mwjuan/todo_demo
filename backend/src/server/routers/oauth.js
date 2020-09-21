@@ -96,6 +96,58 @@ router.get('/logout', async ctx => {
 });
 
 /**
+ * grant_type
+ * - authorization_code
+ * - password
+ * - client_credentials
+ * - refresh_token
+ * - device
+ * 
+ * grant_type=password&email=foo&password=bar&scope=&client_id=xxx&client_secret=xxx
+ * 
+ * @api public
+ */
+router.post('/token', async ctx => {
+	let { grant_type } = ctx.request.body;
+
+	if (grant_type === 'authorization_code') {
+		ctx.body = { access_token: ctx.request.body.code };
+
+	} else if (grant_type === 'password') {
+		let { username, password } = ctx.request.body;
+
+		try {
+			let user = await ctx.model.User.findOne({ email: username });
+			if (!user) throw new Error('user not found');
+			if (user.password !== md5(password)) throw new Error('password not match');
+
+			let payload = { user: { email: user.email } };
+			let access_token = jwt.sign(payload, config.security.jwtSecret, { expiresIn: '1d' });
+			logger.info(`oauth password: generate jwt for user - ${user.email}`);
+			ctx.body = { access_token };
+		} catch (error) {
+			logger.warn(error);
+			ctx.throw(400, error.message);
+		}
+	} else if (grant_type === 'client_credentials') {
+		let { client_id, client_secret } = ctx.request.body;
+
+		if (!client_id) { ctx.throw(400, 'Please specify `client_id`'); }
+		if (!client_secret) { ctx.throw(400, 'Please specify `client_secret`'); }
+
+		// mock client
+		if (client_id === 'todo-webapp' && client_secret === '19335107-dad3-4fc3-8b66-b05a38b45fd2') {
+			let payload = { client: { code: 'todo-webapp' } };
+			let access_token = jwt.sign(payload, config.security.jwtSecret, { expiresIn: '1d' });
+			logger.info(`oauth client credentials: generate jwt for client - ${payload.client.code}`);
+			ctx.body = { access_token };
+		}
+	} else {
+		ctx.throw(400, 'Please specify `grant_type`');
+	}
+});
+
+/**
  * @api private
  */
 let renderLoginPage = async (ctx, viewdata) => {

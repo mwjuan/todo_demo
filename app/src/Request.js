@@ -23,7 +23,7 @@ class Request {
 	}
 
 	async user() {
-		let response = await this.client.get('/api/user');
+		let response = await this.client.get('/api/me');
 		this._user = response.data;
 		return response.data;
 	}
