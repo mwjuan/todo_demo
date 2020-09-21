@@ -3,9 +3,7 @@ const config = require('config');
 const debug = require('debug')('app');
 const moment = require('moment');
 const md5 = require('md5');
-const { nanoid } = require('nanoid');
 const jwt = require('jsonwebtoken');
-const _ = require('lodash');
 const { logger } = require('../../service/Logger');
 
 const router = new Router({ prefix: '/oauth' });
@@ -21,7 +19,7 @@ const router = new Router({ prefix: '/oauth' });
  * @api public
  */
 router.get('/authorize', async ctx => {
-	let { response_type, client_id, redirect_uri } = ctx.query;
+	let { response_type, redirect_uri } = ctx.query;
 	debug(ctx.query)
 	// STEP1: 参数检查
 	if (!(response_type === 'code' || response_type === 'token')) { ctx.throw(400, 'Please specify `response_type`'); }
@@ -55,37 +53,37 @@ router.get('/authorize', async ctx => {
 });
 
 router.post('/authorize', async ctx => {
-	let { response_type, username, password, redirect_uri, client_id } = ctx.request.body;
+	let { response_type, email, password, redirect_uri } = ctx.request.body;
 
 	// STEP1: 根据username, password确定user
 	try {
 		/**
-		 * username and password
+		 * email and password
 		 */
-		let user = await ctx.model.User.findOne({ username: username, password: md5(password) });
+		let user = await ctx.model.User.findOne({ email, password: md5(password) });
 		debug(user);
 		if (!user) throw new Error('user not found or password not match');
 
 		let url = new URL(redirect_uri);
 		if (response_type === 'code') {
-			let payload = { user: { username: user.username } };
+			let payload = { user: { email: user.email } };
 			let code = jwt.sign(payload, config.security.jwtSecret, { expiresIn: '1h' });
-			logger.info(`oauth code: generate jwt for user - ${user.username}`);
+			logger.info(`oauth code: generate jwt for user - ${user.email}`);
 			url.searchParams.set('code', code);
 		}
 
 		if (response_type === 'token') {
-			let payload = { user: { username: user.username } };
+			let payload = { user: { email: user.email } };
 
 			let access_token = jwt.sign(payload, config.security.jwtSecret, { expiresIn: '30d' });
 
-			logger.info(`oauth token: generate jwt for user - ${user.username}`);
+			logger.info(`oauth token: generate jwt for user - ${user.email}`);
 			ctx.cookies.set('token', access_token, { httpOnly: false, expires: moment().add(30, 'day').toDate() });
 		}
 
 		ctx.redirect(url.href);
 	} catch (error) {
-		let flash = { username, message: error.message }
+		let flash = { email, message: error.message }
 		ctx.cookies.set('flash', new Buffer.from(JSON.stringify(flash)).toString('base64'));
 		ctx.redirect(ctx.request.header.referer);
 	}
@@ -99,7 +97,7 @@ router.post('/authorize', async ctx => {
  * - refresh_token
  * - device
  * 
- * grant_type=password&username=foo&password=bar&scope=&client_id=xxx&client_secret=xxx
+ * grant_type=password&email=foo&password=bar&scope=&client_id=xxx&client_secret=xxx
  * 
  * @api public
  */
@@ -110,15 +108,15 @@ router.post('/token', async ctx => {
 		ctx.body = { access_token: ctx.request.body.code };
 
 	} else if (grant_type === 'password') {
-		let { username, password } = ctx.request.body;
+		let { email, password } = ctx.request.body;
 		try {
-			let user = await ctx.model.User.findOne({ username: username });
+			let user = await ctx.model.User.findOne({ email });
 			if (!user) throw new Error('user not found');
 			if (user.password !== md5(password)) throw new Error('password not match');
 
-			let payload = { user: { username: user.username } };
+			let payload = { user: { email: user.email } };
 			let access_token = jwt.sign(payload, config.security.jwtSecret, { expiresIn: '1d' });
-			logger.info(`oauth password: generate jwt for user - ${user.username}`);
+			logger.info(`oauth password: generate jwt for user - ${user.email}`);
 			ctx.body = { access_token };
 		} catch (error) {
 			logger.warn(error);
@@ -132,9 +130,9 @@ router.post('/token', async ctx => {
 
 		// mock client
 		if (client_id === 'app' && client_secret === 'P@ssw0rd') {
-			let payload = { client: { username: 'app' } };
+			let payload = { client: { email: 'app' } };
 			let access_token = jwt.sign(payload, config.security.jwtSecret, { expiresIn: '1d' });
-			logger.info(`oauth client credentials: generate jwt for client - ${payload.client.username}`);
+			logger.info(`oauth client credentials: generate jwt for client - ${payload.client.email}`);
 			ctx.body = { access_token };
 		}
 	} else {
@@ -153,7 +151,7 @@ router.get('/logout', async ctx => {
 let renderLoginPage = async (ctx, viewdata) => {
 	if (ctx.cookies.get('flash')) {
 		let flash = JSON.parse(new Buffer.from(ctx.cookies.get('flash'), 'base64').toString());
-		viewdata.username = flash.username;
+		viewdata.email = flash.email;
 		viewdata.message = flash.message;
 		ctx.cookies.set('flash', null);
 	}

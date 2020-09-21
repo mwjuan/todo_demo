@@ -16,7 +16,7 @@ let auth = function () {
 			}
 
 			if (decoded.user) {
-				let user = await ctx.model.User.findOne({ username: decoded.user.username });
+				let user = await ctx.model.User.findOne({ email: decoded.user.email });
 				if (!user) throw new Error();
 				ctx.state.user = user;
 			}
