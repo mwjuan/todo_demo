@@ -40,6 +40,8 @@ let hoc = (WrappedComponent) => {
 		async componentDidMount() {
 			let token = Cookies.get('token');
 
+			console.log(window.location.origin)
+
 			if (!token) {
 				let redirect_uri = `${encodeURIComponent(window.location)}`;
 				let url = `${window.location.origin}/api/oauth/authorize?response_type=token&redirect_uri=${redirect_uri}`;

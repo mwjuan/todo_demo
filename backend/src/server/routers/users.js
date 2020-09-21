@@ -1,6 +1,6 @@
 const Router = require('koa-router');
 const auth = require('../middleware/koa-auth');
-const router = new Router();
+const router = new Router({ prefix: '/api' });
 router.use(auth());
 
 router.get('/users', async ctx => {

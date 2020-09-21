@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const { nanoid } = require('nanoid');
 const { logger } = require('../../service/Logger');
 
-const router = new Router({ prefix: '/oauth' });
+const router = new Router({ prefix: '/api/oauth' });
 /**
  * 第三方网页程序从浏览器发起单点登录请求
  * 

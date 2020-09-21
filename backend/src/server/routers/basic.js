@@ -4,7 +4,7 @@ const moment = require('moment');
 const config = require('config');
 const ip = require('ip');
 
-const router = new Router();
+const router = new Router({ prefix: '/api' });
 
 router.get('/', async ctx => {
 	ctx.body = {
