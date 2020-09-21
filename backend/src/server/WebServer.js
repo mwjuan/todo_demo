@@ -1,59 +1,53 @@
 const _ = require('lodash');
-const moment = require('moment');
-const path = require('path');
 const config = require('config');
+const { logger } = require('../service/logger');
+const debug = require('debug')('app');
+const path = require('path');
 const Koa = require('koa');
 const koaStatic = require('koa-static');
+const koaViews = require('koa-views');
+const cors = require('@koa/cors');
 const koaJson = require('koa-json');
 const koaBodyParser = require('koa-bodyparser');
 const { userAgent } = require('koa-useragent');
-const cors = require('@koa/cors');
-const koaViews = require('koa-views');
-const koaRedis = require('./middleware/koa-redis');
+const koaLogger = require('./middleware/koa-logger');
 const koaMongoose = require('./middleware/koa-mongoose');
-const router = require('./routers');
-const koaWinston = require('./middleware/koa-winston');
-const AppContext = require('../AppContext');
-
-const { logger } = AppContext.instance;
+const { entries, routers } = require('./routers');
 
 class WebServer {
 	constructor() {
+		this.entries = entries;
 		this.koa = this.build();
 	}
 
 	build() {
 		let koa = new Koa();
-		koa.use(cors());
-		koa.use(koaWinston(logger));
-		koa.use(koaViews(path.join(__dirname, 'views'), { extension: 'hbs', map: { hbs: 'handlebars' } }));
-		koa.use(koaStatic(path.join(__dirname, 'public')));
-		koa.use(koaJson());
-		koa.use(koaBodyParser());
-		koa.use(koaRedis());
-		koa.use(koaMongoose());
-		koa.use(userAgent);
-		koa.use(router);
-		koa.on('error', (err, ctx) => {
-			ctx.logger.error(err);
-		});
+		koa.proxy = true;
+		koa.use(cors())
+			.use(userAgent)
+			.use(koaLogger(logger))
+			.use(koaJson())
+			.use(koaBodyParser())
+			.use(koaMongoose())
+			.use(koaStatic(path.join(__dirname, 'public')))
+			.use(koaViews(path.join(__dirname, 'views'), { extension: 'hbs', map: { hbs: 'handlebars' } }))
+			.use(routers())
+
 		return koa;
 	}
 
 	async open() {
 		return new Promise((resolve, reject) => {
-			this.server = this.koa.listen(config.get('port'), () => {
-				logger.info(`ver: ${AppContext.instance.version}, ${moment().format()}`);
-				logger.info(`Server started, please visit: http://:${config.port} (with ${process.env.NODE_ENV} mode)`);
-
-				resolve();
+			this.server = this.koa.listen(config.get('port'), '0.0.0.0', () => {
+				logger.info(`web server started, please visit: http://0.0.0.0:${config.port} (with ${process.env.NODE_ENV} mode)`);
+				resolve(this.server);
 			});
 		});
 	}
 
 	async close() {
-		logger.info('webserver closed');
 		await this.server.close();
+		logger.info('web server closed.');
 	}
 }
 

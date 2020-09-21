@@ -5,18 +5,16 @@ if (!process.env.NODE_ENV) {
 require('dotenv').config();
 const debug = require('debug')('app:dropdb');
 const config = require('config');
-const AppContext = require('../src/AppContext');
-const { mongodb } = AppContext.instance;
+const mongoose = require('mongoose');
 
 let app = async () => {
 	try {
 		debug(`[${process.env.NODE_ENV}] ${config.get('db')}`);
 
-		await mongodb.open(config.get('db'));
+		await mongoose.connect(config.db);
+		await mongoose.connection.dropDatabase();
 
-		await mongodb.drop();
-
-		await mongodb.close();
+		await mongoose.connection.close();
 	} catch (error) {
 		debug(error);
 	} finally {

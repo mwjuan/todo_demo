@@ -6,7 +6,7 @@ const Schema = mongoose.Schema;
 
 /** @class */
 let UserSchema = new Schema({
-	email: { type: String, required: true },
+	username: { type: String, required: true },
 	name: { type: String, required: true },
 	password: { type: String, rquired: false }
 });

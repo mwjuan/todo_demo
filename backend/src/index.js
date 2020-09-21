@@ -1,25 +1,23 @@
-const AppContext = require('./AppContext');
-const { logger } = AppContext.instance;
+const debug = require('debug')('app');
+const { logger } = require('./service/logger');
+const app = require('./app');
 
-require('./model');
-
-const App = require('./App');
-let app = new App();
+if (!process.env.NODE_ENV) {
+	process.env.NODE_ENV = 'development';
+}
 
 let main = async () => {
 	await app.open();
 };
 
-let cleanup = () => {
-	app.close();
+let cleanup = async () => {
+	await app.close();
 	process.exit();
 };
 
+main().then().catch(err => {
+	logger.error(err.stack);
+});
+
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
-
-main().then(() => {
-
-}).catch(err => {
-	logger.error(err);
-});

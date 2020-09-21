@@ -9,3 +9,8 @@ home_origin: http://localhost:3000
 logger:
   file: false
   console: true
+
+security:
+  jwtSecret: QWZZuUjA
+  publicKey: ./security/public-key
+  privateKey: ./security/private-key

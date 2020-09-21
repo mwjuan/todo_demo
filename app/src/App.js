@@ -1,12 +1,8 @@
 import React, { Component } from 'react';
-import { HashRouter as Router, Switch, Route } from 'react-router-dom';
 import Cookies from 'js-cookie';
-import Request from './Request';
+import request from './request';
 import Debug from 'debug';
-import Home from './Home';
 import { FiLogOut } from "react-icons/fi";
-import AppContext from './AppContext';
-import './App.css';
 
 const debug = Debug('app');
 
@@ -14,31 +10,22 @@ function App(props) {
 	return (
 		<div className="App">
 			<div className="header">
-				<p>Todolist 365</p>
-				<div style={{ display: 'flex', alignItems: 'center' }}>
+				<div style={{ display: 'flex', alignItems: 'center', paddingLeft: 20 }}>
 					{props.user &&
-						<span>{props.user.name}</span>
+						<h1>Hello，{props.user.name}</h1>
 					}
-					<button onClick={e => {
-						e.preventDefault();
-						Cookies.remove('token');
-						let url = `${AppContext.instance.service}/oauth/logout`;
-						window.location = url;
-					}}>
-						<FiLogOut className='react-icons' style={{ fontSize: 20, verticalAlign: 'middle', color: '#fff' }} />
+					<button
+						style={{ marginLeft: 10 }}
+						onClick={e => {
+							e.preventDefault();
+							Cookies.remove('token');
+							let url = '/api/oauth/logout';
+							window.location = url;
+						}}>
+						<FiLogOut className='react-icons' style={{ fontSize: 20, verticalAlign: 'middle' }} />
 					</button>
 				</div>
 			</div>
-			<Router>
-				<Switch>
-					<Route path="/about">
-						<h1>/about</h1>
-					</Route>
-					<Route path="/">
-						<Home user={props.user} />
-					</Route>
-				</Switch>
-			</Router>
 		</div>
 	);
 }
@@ -51,19 +38,18 @@ let hoc = (WrappedComponent) => {
 		}
 
 		async componentDidMount() {
-			debug(AppContext.instance.service);
-			this.clientId = AppContext.instance.clientId;
 			let token = Cookies.get('token');
+
 			if (!token) {
-				let redirect_uri = encodeURIComponent(`${AppContext.instance.service}/oauth/callback/self?redirect=${encodeURIComponent(window.location)}`);
-				let url = `${AppContext.instance.service}/oauth/authorize?response_type=token&client_id=${this.clientId}&redirect_uri=${redirect_uri}`;
-				window.location = url;
+				let redirect_uri = `${encodeURIComponent(window.location)}`;
+				let url = `${window.location.origin}/api/oauth/authorize?response_type=token&redirect_uri=${redirect_uri}`;
+				window.location.href = url;
 			} else {
-				Request.instance.token = token;
-				let user = await Request.instance.user();
+				request.token = token;
+
+				let user = await request.user();
 				debug(user);
-				this.setState({ user });
-				this.setState({ loading: false, token });
+				this.setState({ loading: false, user });
 			}
 		}
 

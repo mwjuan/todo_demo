@@ -1,12 +1,15 @@
 const Router = require('koa-router');
-const mongoose = require('mongoose');
-const User = mongoose.model('User');
+const auth = require('../middleware/koa-auth');
+const router = new Router();
+router.use(auth());
 
-const router = new Router({ prefix: '/users' });
-
-router.get('/', async ctx => {
-	let users = await User.find();
+router.get('/users', async ctx => {
+	let users = await ctx.model.User.find();
 	ctx.body = users;
+});
+
+router.get('/user', async ctx => {
+	ctx.body = ctx.state.user;
 });
 
 module.exports = router;

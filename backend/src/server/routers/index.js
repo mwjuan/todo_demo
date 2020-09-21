@@ -1,17 +1,22 @@
-const compose = require('koa-compose');
 const _ = require('lodash');
+const combineRouters = require('koa-combine-routers');
+const oauthServer = require('./oauth');
+const users = require('./users');
+const basic = require('./basic');
 
-let mods = [
-	require('./basic'),
-	require('./oauth/server'),
-	require('./oauth/client'),
-	require('./users'),
-];
+let routers = [oauthServer, users, basic];
 
-let routers = [];
-_.each(mods, x => {
-	routers.push(x.routes());
-	routers.push(x.allowedMethods());
+let entries = [];
+
+_.each(routers, router => {
+	_.each(router.stack, s => {
+		_.each(s.methods, m => {
+			if (['GET', 'POST', 'PUT', 'DELETE'].includes(m.toUpperCase())) {
+				entries.push(`${m} ${s.path}`);
+			}
+		})
+	});
 });
 
-module.exports = compose(routers);
+exports.entries = entries;
+exports.routers = combineRouters(...routers);

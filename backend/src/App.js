@@ -1,44 +1,74 @@
+const debug = require('debug')('app');
 const WebServer = require('./server/WebServer');
-const AppContext = require('./AppContext');
+const { logger } = require('./service/logger');
 const config = require('config');
+const moment = require('moment');
+const mongoose = require('mongoose');
+const Redis = require('ioredis');
+const redis = new Redis(config.redis, { lazyConnect: true });
 
-const {
-	mongodb,
-	redisService
-} = AppContext.instance;
+require('./model')
 
-/** 
- * 整个程序的组织者
- */
 class App {
 	constructor() {
 		this.webServer = new WebServer();
-		AppContext.instance.webServer = new WebServer();
+		this.uptime = moment().unix();
 	}
 
-	/**
-	 * 程序启动
-	 * 1. 打开mongodb
-	 * 2. 打开redis
-	 * 3. 打开web server
-	 */
 	async open() {
-		await mongodb.open(config.get('db'));
-		await redisService.open();
-		await this.webServer.open();
+		logger.info(`application starting ..., pid: ${process.pid}`);
+
+		await this.openRedis();
+		await this.openDatabase();
+		await this.openWebServer();
 	}
 
-	/**
-	 * 程序结束
-	 * 1. 关闭web server
-	 * 2. 关闭redis
-	 * 3. 关闭mongodb
-	 */
 	async close() {
+		await this.closeRedis();
+		await this.closeWebServer();
+		await this.closeDatabase();
+		logger.info('application closed.');
+	}
+
+	async openRedis() {
+		await redis.connect();
+		logger.info(`redis connected OK: ${config.redis}`);
+	}
+
+	async closeRedis() {
+		redis.quit();
+		logger.info('redis closed.');
+	}
+
+	async openDatabase() {
+		try {
+			await mongoose.connect(config.db, {
+				useNewUrlParser: true,
+				useUnifiedTopology: true,
+				useFindAndModify: false,
+				useCreateIndex: true
+			});
+			logger.info(`mongodb connected OK: ${config.db}`);
+		} catch (err) {
+			logger.error(`mongodb connected FAILED: ${config.db}`)
+		}
+	}
+
+	async closeDatabase() {
+		await mongoose.connection.close();
+		logger.info('mongodb closed.');
+	}
+
+	async openWebServer() {
+		await this.webServer.open();
+		this.webServer.koa.context.app = this;
+		this.webServer.koa.context.logger = logger;
+		this.webServer.koa.context.redis = redis;
+	}
+
+	async closeWebServer() {
 		await this.webServer.close();
-		await redisService.close();
-		await mongodb.close();
 	}
 }
 
-module.exports = App;
+module.exports = new App();
