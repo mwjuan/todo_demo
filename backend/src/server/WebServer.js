@@ -12,6 +12,7 @@ const koaBodyParser = require('koa-bodyparser');
 const { userAgent } = require('koa-useragent');
 const koaLogger = require('./middleware/koa-logger');
 const koaMongoose = require('./middleware/koa-mongoose');
+const koaRedis = require('./middleware/koa-redis');
 const { entries, routers } = require('./routers');
 
 class WebServer {
@@ -29,6 +30,7 @@ class WebServer {
 			.use(koaJson())
 			.use(koaBodyParser())
 			.use(koaMongoose())
+			.use(koaRedis())
 			.use(koaStatic(path.join(__dirname, 'public')))
 			.use(koaViews(path.join(__dirname, 'views'), { extension: 'hbs', map: { hbs: 'handlebars' } }))
 			.use(routers())

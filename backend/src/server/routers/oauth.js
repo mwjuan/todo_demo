@@ -4,6 +4,7 @@ const debug = require('debug')('app');
 const moment = require('moment');
 const md5 = require('md5');
 const jwt = require('jsonwebtoken');
+const { nanoid } = require('nanoid');
 const { logger } = require('../../service/Logger');
 
 const router = new Router({ prefix: '/oauth' });
@@ -36,14 +37,11 @@ router.get('/authorize', async ctx => {
 
 	// STEP3: 根据jwt确定user, 根据code/token指示进行跳转
 	try {
-		let decoded = await jwt.verify(token, config.security.jwtSecret);
 		let url = new URL(redirect_uri);
 		if (response_type === 'code') {
-			// url.searchParams.set('code', await generateAuthorizationCode(ctx, user));
+			url.searchParams.set('code', await generateAuthorizationCode(ctx, ctx.user));
 		}
-		if (response_type === 'token') {
-			// nothing to do
-		}
+
 		ctx.redirect(url.href);
 	} catch (error) {
 		debug(error.stack);
@@ -79,6 +77,7 @@ router.post('/authorize', async ctx => {
 
 			logger.info(`oauth token: generate jwt for user - ${user.email}`);
 			ctx.cookies.set('token', access_token, { httpOnly: false, expires: moment().add(30, 'day').toDate() });
+			ctx.redis.set('token', access_token, 'EX', 3600 * 24 * 30)
 		}
 
 		ctx.redirect(url.href);
@@ -91,6 +90,8 @@ router.post('/authorize', async ctx => {
 
 router.get('/logout', async ctx => {
 	ctx.cookies.set('token', null, { maxAge: 0, httpOnly: false });
+	ctx.redis.del('token')
+
 	ctx.redirect('/');
 });
 
@@ -106,6 +107,13 @@ let renderLoginPage = async (ctx, viewdata) => {
 	}
 
 	await ctx.render('login', viewdata);
+};
+
+//生成授权码
+let generateAuthorizationCode = async (ctx, user) => {
+	let code = nanoid(8);
+	await ctx.redis.set(`code:${code}`, user, 'EX', 300);
+	return code;
 };
 
 module.exports = router;
