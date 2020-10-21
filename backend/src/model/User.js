@@ -9,7 +9,7 @@ let UserSchema = new Schema({
 	email: { type: String, required: true },
 	name: { type: String, required: true },
 	password: { type: String, rquired: false }
-});
+}, { timestamps: true });
 
 UserSchema.plugin(mongooseHidden({ defaultHidden: { _v: true, password: true } }));
 UserSchema.plugin(paginate);
